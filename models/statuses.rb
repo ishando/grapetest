@@ -45,9 +45,12 @@ module GrapeTest
       end
     end
 
-    attr_accessor :request_amt
-    attr_accessor :approve_amt
-    attr_accessor :statuses
+    def request_amt
+      return values[:request_amt]
+    end
+    def approve_amt
+      return values[:approve_amt]
+    end
 
     def entity
       Entity.new(self)
@@ -60,10 +63,11 @@ module GrapeTest
     end
 
     class Completed < GrapeTest::EventStatusLog::Entity
-      expose :request_amt, :approve_amt, documentation: { type: String }
+      expose :request_amt, :approve_amt, safe: true, documentation: { type: String }
     end
 
     class Status < Grape::Entity
+      root('statuses', 'status')
       expose :status, documentation: { type: String }
       expose :event_ts, documentation: { type: Date }
       expose :elapsed_time, documentation: { type: String }
@@ -71,38 +75,9 @@ module GrapeTest
 
     class Incomplete < Grape::Entity
       expose :customer_uuid, :application_id, documentation: { type: String }
-      present_collection true, :statuses
       expose :statuses, using: GrapeTest::EventStatusLog::Status #, documentation: { type: Array }
     end
 
   end
 
 end
-
-
-#[<GrapeTest::EventStatusLog @values={
-# :customer_uuid=>"Cust0001",
-# :application_id=>"1",
-# :elapsed_time=>0.8e0,
-# :status=>"completed",
-# :event_ts=>2017-10-16 07:04:11 +1100,
-# :request_amt=>"20000",
-# :approve_amt=>"10000"}>,
-
-#<GrapeTest::EventStatusLog @values={
-# :customer_uuid=>"Cust0002",
-# :application_id=>"2",
-# :elapsed_time=>0.6e0,
-# :status=>"completed",
-# :event_ts=>2017-10-17 02:16:11 +1100,
-# :request_amt=>"30000",
-# :approve_amt=>"0"}>,
-
-#<GrapeTest::EventStatusLog @values={
-# :customer_uuid=>"Cust0003",
-# :application_id=>"3",
-# :elapsed_time=>0.4e0,
-# :status=>"completed",
-# :event_ts=>2017-10-17 04:40:11 +1100,
-# :request_amt=>"20000",
-# :approve_amt=>"0"}>]
