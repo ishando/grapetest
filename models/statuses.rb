@@ -13,7 +13,7 @@ module GrapeTest
              from event_status_logs e1
              where not exists
                (select 1 from event_status_logs e0
-                inner join status_maps m0 on m0.event_type = e0.event_type and m0.category = 'complete'
+                inner join status_maps m0 on m0.event_type = e0.event_type and m0.category = 'completed'
                 where e0.application_id = e1.application_id)
              group by e1.customer_uuid, e1.application_id)
           select a1.customer_uuid, a1.application_id, m2.category as status, max(e2.event_ts) as event_ts, a1.elapsed_time
@@ -47,6 +47,7 @@ module GrapeTest
 
     attr_accessor :request_amt
     attr_accessor :approve_amt
+    attr_accessor :statuses
 
     def entity
       Entity.new(self)
@@ -58,13 +59,22 @@ module GrapeTest
       expose :elapsed_time, documentation: { type: String }
     end
 
-  end
+    class Completed < GrapeTest::EventStatusLog::Entity
+      expose :request_amt, :approve_amt, documentation: { type: String }
+    end
 
-  class Completed < Grape::Entity
-    expose :customer_uuid, :application_id, :status, documentation: { type: String }
-    expose :event_ts, documentation: { type: Date }
-    expose :elapsed_time, documentation: { type: String }
-    expose :request_amt, :approve_amt, documentation: { type: String }
+    class Status < Grape::Entity
+      expose :status, documentation: { type: String }
+      expose :event_ts, documentation: { type: Date }
+      expose :elapsed_time, documentation: { type: String }
+    end
+
+    class Incomplete < Grape::Entity
+      expose :customer_uuid, :application_id, documentation: { type: String }
+      present_collection true, :statuses
+      expose :statuses, using: GrapeTest::EventStatusLog::Status #, documentation: { type: Array }
+    end
+
   end
 
 end
