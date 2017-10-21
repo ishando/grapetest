@@ -5,7 +5,6 @@ require 'oci8'
 require 'sequel'
 
 DB = Sequel.connect(adapter: 'oracle', host: '0.0.0.0:6601/xe', user: 'scentre', password: 'scentre')
-p DB
 
 #require_relative 'app/grape_test'
 require_relative 'app/api'
