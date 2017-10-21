@@ -9,7 +9,8 @@ module GrapeTest
       def incomplete
         with_sql(<<~SQL)
           with applications as
-            (select e1.customer_uuid, e1.application_id, sum(e1.elapsed_time) elapsed_time, max(e1.event_ts) event_ts
+            (select e1.customer_uuid, e1.application_id,
+                    sum(bus_days_p.get_elapsed_time(e1.event_ts, e1.elapsed_time)) elapsed_time, max(e1.event_ts) event_ts
              from event_status_logs e1
              where not exists
                (select 1 from event_status_logs e0
@@ -56,21 +57,32 @@ module GrapeTest
       Entity.new(self)
     end
 
-    class Entity < Grape::Entity
+    class FmtEntity < Grape::Entity
+      format_with(:big_num) do |n|
+        t = ''
+        t += sprintf('%dd ', n.floor) if n.floor > 0
+        n = (n - n.floor) * 24
+        t += sprintf('%dh ', n.floor) if n.floor > 0
+        n = (n - n.floor) * 60
+        t += sprintf('%02dm', n.floor)
+      end
+    end
+
+    class Entity < FmtEntity
       expose :customer_uuid, :application_id, :status, documentation: { type: String }
       expose :event_ts, documentation: { type: Date }
-      expose :elapsed_time, documentation: { type: String }
+      expose :elapsed_time, format_with: :big_num, documentation: { type: String }
     end
 
     class Completed < GrapeTest::EventStatusLog::Entity
       expose :request_amt, :approve_amt, safe: true, documentation: { type: String }
     end
 
-    class Status < Grape::Entity
+    class Status < FmtEntity
       root('statuses', 'status')
       expose :status, documentation: { type: String }
       expose :event_ts, documentation: { type: Date }
-      expose :elapsed_time, documentation: { type: String }
+      expose :elapsed_time, format_with: :big_num, documentation: { type: String }
     end
 
     class Incomplete < Grape::Entity

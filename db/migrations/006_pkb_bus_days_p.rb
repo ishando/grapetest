@@ -1,8 +1,8 @@
 Sequel.migration do
   up do
-    puts('Creating package body HOLIDAYS_P')
+    puts('Creating package body BUS_DAYS_P')
     run(<<~SQL)
-      create or replace package body holidays_p
+      create or replace package body bus_days_p
       as
         -----------------------------------------
         procedure div_parts(i_num in pls_integer, i_div in pls_integer, o_int out pls_integer, o_mod out pls_integer)
@@ -140,12 +140,60 @@ Sequel.migration do
             rollback;
             raise;
         end generate_holidays;
-      end holidays_p;
+
+        function is_weekend(i_date in date)
+          return boolean
+        is
+        begin
+          -- days 1-5 = M-F, 6-7 = Sat-Sun --
+          if to_number(to_char(i_date,'d')) < 6 then
+            return false;
+          else
+            return true;
+          end if;
+        end is_weekend;
+
+        -----------------------------------------
+        function get_day_hours(i_start_ts in date, i_end_ts in date)
+          return number
+        is
+          k_bus_start number :=  9/24;
+          k_bus_end   number := 17/24;
+        begin
+          return least(i_end_ts, trunc(i_end_ts) + k_bus_end) - greatest(i_start_ts, trunc(i_start_ts) + k_bus_start);
+        end get_day_hours;
+
+        -----------------------------------------
+        function get_elapsed_time(i_date in date, i_time in number default null)
+          return number
+        is
+          l_time number := 0;
+          l_end_ts date := trunc(i_date) + 1 - 1/86400; -- set to 23:59:59 --
+          l_start_ts date := i_date;
+        begin
+          -- if elapsed time is already calculated then just return it --
+          if i_time is not null then
+            return i_time;
+          end if;
+
+          for i in 1 .. ceil(sysdate - trunc(i_date)) loop
+            if not (is_weekend(l_start_ts) or is_holiday(l_start_ts)) then
+              l_time := l_time + get_day_hours(l_start_ts, l_end_ts);
+            end if;
+            -- set start and end times from the next day --
+            l_start_ts := trunc(l_start_ts) + 1;
+            l_end_ts := least(sysdate, l_end_ts + 1);
+          end loop;
+
+          return l_time;
+        end get_elapsed_time;
+
+      end bus_days_p;
     SQL
   end
 
   down do
-    puts('Dropping package body HOLIDAYS_P')
-    run('drop package body holidays_p')
+    puts('Dropping package body BUS_DAYS_P')
+    run('drop package body bus_days_p')
   end
 end

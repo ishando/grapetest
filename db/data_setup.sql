@@ -43,12 +43,13 @@ from (select 'Cust0001' customer_uuid, 1 application_id, 'submitted' event_type,
       select 'Cust0002', 7, 'submitted', 'submitted', sysdate - 0.72, '15000' from dual);
 
 update EVENT_STATUS_LOGS e0
-set elapsed_time = event_ts - (select max(event_ts) from EVENT_STATUS_LOGS e1 where e1.application_id = e0.application_id and e1.id < e0.id)
-where exists (select 1 from EVENT_STATUS_LOGS e1 where e1.application_id = e0.application_id and e1.id < e0.id);
+set elapsed_time = event_ts - (select min(event_ts) from EVENT_STATUS_LOGS e1 where e1.application_id = e0.application_id and e1.id > e0.id)
+where exists (select 1 from EVENT_STATUS_LOGS e1 where e1.application_id = e0.application_id and e1.id > e0.id);
 
 update EVENT_STATUS_LOGS e0
 set elapsed_time = 0
-where elapsed_time is null;
+where elapsed_time is null
+and event_type in (select event_type from status_maps where category = 'completed');
 
 commit;
 
