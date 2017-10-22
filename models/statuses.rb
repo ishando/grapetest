@@ -1,9 +1,40 @@
 require 'sequel'
 require 'grape-entity'
 
+module Formatter
+  extend Grape::API::Helpers
+
+  Grape::Entity.format_with(:day_fraction) do |days|
+    wholedays, hours, minutes = [1, 24, 60].map do |fraction|
+      days *= fraction
+      ret, days = days.divmod(1)
+      ret
+    end
+
+    return [
+      ("#{wholedays}d " if wholedays > 0),
+      ("#{hours}h "     if hours > 0    ),
+      ("#{minutes}m"                    ),
+    ].join
+  end
+end
+
 module GrapeTest
   class EventStatusLog < Sequel::Model
     require_valid_table = false
+    plugin :after_initialize
+
+    def after_initialize
+      if !defined? @@generated
+        values.each do |column, val|
+          self.class.send :define_method, column do
+            values[column]
+          end
+        end
+
+        @@generated = 1
+      end
+    end
 
     dataset_module do
       def incomplete
@@ -57,32 +88,21 @@ module GrapeTest
       Entity.new(self)
     end
 
-    class FmtEntity < Grape::Entity
-      format_with(:big_num) do |n|
-        t = ''
-        t += sprintf('%dd ', n.floor) if n.floor > 0
-        n = (n - n.floor) * 24
-        t += sprintf('%dh ', n.floor) if n.floor > 0
-        n = (n - n.floor) * 60
-        t += sprintf('%02dm', n.floor)
-      end
-    end
-
-    class Entity < FmtEntity
+    class Entity < Grape::Entity
       expose :customer_uuid, :application_id, :status, documentation: { type: String }
       expose :event_ts, documentation: { type: Date }
-      expose :elapsed_time, format_with: :big_num, documentation: { type: String }
+      expose :elapsed_time, format_with: :day_fraction, documentation: { type: String }
     end
 
     class Completed < GrapeTest::EventStatusLog::Entity
       expose :request_amt, :approve_amt, safe: true, documentation: { type: String }
     end
 
-    class Status < FmtEntity
+    class Status < Grape::Entity
       root('statuses', 'status')
       expose :status, documentation: { type: String }
       expose :event_ts, documentation: { type: Date }
-      expose :elapsed_time, format_with: :big_num, documentation: { type: String }
+      expose :elapsed_time, format_with: :day_fraction, documentation: { type: String }
     end
 
     class Incomplete < Grape::Entity
