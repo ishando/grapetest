@@ -6,6 +6,8 @@ Sequel.migration do
       as
         function get_easter(i_year in integer) return date;
         function is_holiday(i_date in date) return boolean;
+        function is_holiday(i_date in date, i_location in varchar2) return boolean;
+        function is_weekend(i_date in date) return boolean;
 
         function get_elapsed_time(i_date in date, i_time in number default null) return number;
 
