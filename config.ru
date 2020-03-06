@@ -1,10 +1,10 @@
 #/ -p 9292
 
 require 'rack'
-require 'oci8'
+require 'pg'
 require 'sequel'
 
-DB = Sequel.connect(adapter: 'oracle', host: '0.0.0.0:6601/xe', user: 'scentre', password: 'scentre')
+DB = Sequel.connect(adapter: 'postgres', host: 'localhost', database: 'scentre', user: 'scentre', password: 'scentre')
 
 #require_relative 'app/grape_test'
 require_relative 'app/api'
