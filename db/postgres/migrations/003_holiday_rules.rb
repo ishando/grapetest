@@ -37,7 +37,7 @@ Sequel.migration do
         select 'AU' loc, 'New Year' as name, 1 hol_month, 1 hol_date, null::text hol_day, null::integer occur, 'M' roll, null::text hol_function union all
         select 'AU', 'Australia Day',           1,   26, null,   null, 'FM', null union all
         select 'AU', 'Good Friday',          null, null, null,   null, null, format('get_easter(%s) - 2', extract(year from current_date)) union all
-        select 'AU', 'Easter Monday',        null, null, null,   null, null, format('get_easter(%s) + 2', extract(year from current_date)) union all
+        select 'AU', 'Easter Monday',        null, null, null,   null, null, format('get_easter(%s) + 1', extract(year from current_date)) union all
         select 'AU', 'Anzac Day',               4,   25, null,   null, 'SO', null union all
         select 'AU', 'Queens Birthday',         6, null, 'Monday',  2, null, null union all
         select 'AU', 'Christmas',              12,   25, null,   null, 'FM', null union all

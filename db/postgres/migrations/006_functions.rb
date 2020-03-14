@@ -67,7 +67,7 @@ Sequel.migration do
         -- its a week day, so no need to roll --
         when l_day < 6 then return l_date;
         -- Sat->Fri, Sun->Mon --
-        when i_roll = 'FM' then return l_date + sign(l_day - 6.5);
+        when i_roll = 'FM' then return l_date + sign(l_day - 6.5)::integer;
         -- both Sat and Sun -> Mon --
         when i_roll = 'M' then
           l_date := l_date + (8 - l_day);
@@ -120,7 +120,7 @@ Sequel.migration do
               l_date := to_date(to_char(l_year,'9999') || to_char(c1.hol_month,'09') || '01','yyyymmdd');  -- get last day of month
               l_date := next_day(l_date, c1.hol_day) + c1.occur * 7;                                -- get first occur of day in next month, then subtract weeks to get -nth occurence
             when c1.hol_function is not null then
-              execute immediate(c1.hol_function) into l_date using l_year;
+              execute 'select ' || c1.hol_function into l_date using l_year;
             else
               raise exception 'invalid holiday rule';
           end case;
