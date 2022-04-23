@@ -1,9 +1,9 @@
 source 'https://rubygems.org'
 
-gem 'grape', '~> 1.3'
-gem 'grape-entity', '~> 0.8'
+gem 'grape', '~> 1.6'
+gem 'grape-entity', '~> 0.10'
 gem 'rack', '~> 2.2'
-gem 'pg', '~> 1.2.2'
+gem 'pg', '~> 1.3.5'
 gem 'sequel', '~> 5.30'
 
 group :test, :development do
